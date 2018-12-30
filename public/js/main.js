@@ -11,7 +11,7 @@ Main.prototype = {
         game.load.tilemap('ragnaros', '/assets/json/rag_lair.json', null, Phaser.Tilemap.TILED_JSON);
         game.load.image('rag_tiles', '/assets/tiles.png');
 
-        game.load.script('Config', '/config/config.js');
+        game.load.script('Config', '/js/config/config.js');
     
         // Sprites
         game.load.image('boss', '/assets/icons/boss.png');

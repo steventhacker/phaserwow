@@ -64,6 +64,8 @@ RagnarosFight.prototype = {
         // units
         this.boss = new Ragnaros(450, 400, game);
         this.player = new Mage(100, 800, game);
+
+        this.player.setBoss(this.boss);
         
         this.tank = new Tank(420, 450, 'tank', 400, this.boss);
         this.healer = new Healer(200, 450, 'healer', 100, this.boss, this.tank, this.player);
@@ -92,88 +94,58 @@ RagnarosFight.prototype = {
             this.tank.autoAttack();
             this.healer.startRotation();
 
-            var inLava = false;
-            // If you are walking in lava, slow down and take damage
-            this.lavaGroup.forEach(object => {
-                var playerBounds = this.player.sprite.getBounds();
-                var objectBounds = object.getBounds();
-
-                if (Phaser.Rectangle.intersects(playerBounds, objectBounds)) {
-                    inLava = true;
-                } 
-            });
-
-            if (inLava) {
-                this.player.takeDamage(1);
-                this.movementSpeed = Config.movementSpeed / 2;
-            } else {
-                this.movementSpeed = Config.movementSpeed;
-            }
+            this.lavaCheck();
 
             if (game.input.keyboard.isDown(Phaser.Keyboard.A)) {
-                if (this.castTween && this.castTween.isRunning) {
-                    this.clearCast();
+                if (this.player.castTween && this.player.castTween.isRunning) {
+                    this.player.clearCast();
                 }
                 this.player.sprite.x -= this.movementSpeed;
             }
             else if (game.input.keyboard.isDown(Phaser.Keyboard.D)) {
-                if (this.castTween && this.castTween.isRunning) {
-                    this.clearCast();
+                if (this.player.castTween && this.player.castTween.isRunning) {
+                    this.player.clearCast();
                 }
                 this.player.sprite.x += this.movementSpeed;
             }
         
             if (game.input.keyboard.isDown(Phaser.Keyboard.W)) {
-                if (this.castTween && this.castTween.isRunning) {
-                    this.clearCast();
+                if (this.player.castTween && this.player.castTween.isRunning) {
+                    this.player.clearCast();
                 }
                 this.player.sprite.y -= this.movementSpeed;
             }
             else if (game.input.keyboard.isDown(Phaser.Keyboard.S)) {
-                if (this.castTween && this.castTween.isRunning) {
-                    this.clearCast();
+                if (this.player.castTween && this.player.castTween.isRunning) {
+                    this.player.clearCast();
                 }
                 this.player.sprite.y += this.movementSpeed;
             }
         
             if (game.input.keyboard.isDown(Phaser.Keyboard.ONE)) {
-                if (this.castTween && this.castTween.isRunning) {
-                    this.clearCast();
-                }
-                this.shoot();
+                this.player.shoot();
             }
         }
     },
 
-    shoot() {
-        if (this.casting) {
-            console.log('Trying while casting');
-            return;
+    lavaCheck() {
+        var inLava = false;
+        // If you are walking in lava, slow down and take damage
+        this.lavaGroup.forEach(object => {
+            var playerBounds = this.player.sprite.getBounds();
+            var objectBounds = object.getBounds();
+
+            if (Phaser.Rectangle.intersects(playerBounds, objectBounds)) {
+                inLava = true;
+            } 
+        });
+
+        if (inLava) {
+            this.player.takeDamage(this.player.hp / 200);
+            this.movementSpeed = Config.movementSpeed / 2;
+        } else {
+            this.movementSpeed = Config.movementSpeed;
         }
-        
-        this.casting = true;
-    
-        this.castBar = game.add.sprite(350, 900, 'castBar');
-        this.castProgress = game.add.sprite(this.castBar.x + 10, this.castBar.y + 7, 'castProgress');
-    
-        this.castTween = game.add.tween(this.castProgress.scale).to({x: 11.2}, 000, Phaser.Easing.Quadratic.InOut, true, 0);
-        this.castTween.onComplete.add(() => {
-            this.clearCast();
-            this.frostbolt = game.add.sprite(this.player.sprite.x + 8, this.player.sprite.y + 8, 'frostbolt');
-            game.physics.arcade.enable(this.frostbolt);
-        
-            // activate the cooldown animation
-            var endX = this.boss.sprite.x + (this.boss.sprite.width / 2 - 8);
-            var endY = this.boss.sprite.y + (this.boss.sprite.height / 2 - 8);
-            var tween = game.add.tween(this.frostbolt).to({x: endX, y: endY}, 400, Phaser.Easing.Quadratic.InOut, true, 0);
-            tween.onComplete.add(() => {
-                this.frostbolt.destroy();
-                this.boss.takeDamage(10);
-                this.boss.addThreat('player', 10);
-                this.casting = false;
-            });
-        });       
-        
     },
 
     showDeath() {
@@ -188,13 +160,6 @@ RagnarosFight.prototype = {
         this.deathScreenLink = game.add.button(game.world.centerX, game.world.centerY + 100, 'mana', function() {
             game.state.start('Main');
         }, this);
-    },
-
-    clearCast() {
-        this.castTween.stop();
-        this.casting = false;
-        this.castBar.destroy();
-        this.castProgress.destroy();
     },
 
     render() {

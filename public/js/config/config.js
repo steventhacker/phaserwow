@@ -1,3 +1,4 @@
 var Config = {
-    movementSpeed: 4
+    movementSpeed: 4,
+    lavaDamageModifier: 200 
 }
